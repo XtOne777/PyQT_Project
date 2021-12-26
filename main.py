@@ -14,10 +14,33 @@ class Product(QMainWindow):
         # Вызов базы данных
         self.connection = sqlite3.connect('main.sqlite')
         self.res = self.connection.cursor().execute('SELECT * FROM Товары').fetchall()
-        self.pushButton.clicked.connect(self.clicked_t)  # Выдаём функцию кнопке
-        self.select_data()  # Вызов функции вывода данных таблици
+        self.pushButton.clicked.connect(self.clicked_t)  # кнопка добавить
+        self.pushButton_2.clicked.connect(self.clicked_b)  # кнопка изменить
+
+    def edit(self):
+        try:
+            self.pushButton.hide()  # прячем кнопку добавить
+            self.pushButton_2.show()  # показываем кнопку изменить
+            self.label.setText('Номер покупки:')
+            if len(self.data) > 0:  # проверка на наличие данных
+                self.lineEdit.setText(str(len(self.data)))
+                self.lineEdit_2.setText(self.data[-1][4][:-1])
+                self.lineEdit_3.setText(str(self.data[-1][3]))
+            self.table.setColumnCount(6)  # количество столбцов
+            self.table.setRowCount(0)  # строки
+            for i, row in enumerate(self.data):
+                self.table.setRowCount(self.table.rowCount() + 1)  # количество строк
+                for j, elem in enumerate(row):
+                    self.table.setItem(i, j, QTableWidgetItem(str(elem)))  # вводим данные
+            # имена столбцов
+            self.table.setHorizontalHeaderLabels(['id', 'Товар', 'Цена(1шт.)', 'Количество', 'Скидка', 'Всего'])
+        except ValueError:
+            self.excep.setText('Неправильный формат ввода!')
 
     def select_data(self):
+        self.pushButton_2.hide()  # прячем кнопку изменить
+        self.pushButton.show()  # показываем кнопку добавить
+        self.label.setText('id Продукта:')
         self.res = self.connection.cursor().execute('SELECT * FROM Товары').fetchall()  # Взятие данных из бд
         # Размеры таблицы
         self.table.setColumnCount(3)
@@ -43,6 +66,23 @@ class Product(QMainWindow):
             except ValueError:
                 self.excep.setText('Неправильный формат ввода!')
 
+    def clicked_b(self):
+        try:
+            # редакция данных
+            self.data[int(self.lineEdit.text()) - 1] = (self.data[int(self.lineEdit.text()) - 1][0],
+                                                        self.data[int(self.lineEdit.text()) - 1][1],
+                                                        self.data[int(self.lineEdit.text()) - 1][2],
+                                                        self.lineEdit_3.text(),
+                                                        self.lineEdit_2.text() + '%',
+                                                        str(int(int(self.lineEdit_2.text()) * 0.01
+                                                                * int(self.lineEdit_3.text())
+                                                                * int(self.data[int(self.lineEdit.text()) - 1][2]
+                                                                      ))))
+            # надпись о успехе
+            self.excep.setText(self.data[int(self.lineEdit.text()) - 1][1] + ' добавлен успешно!')
+        except ValueError:
+            self.excep.setText('Неправильный формат ввода!')
+
     def return_data(self):
         return self.data  # Возращаем список данных
 
@@ -56,9 +96,15 @@ class Main(QMainWindow):
         self.connection = sqlite3.connect('main.sqlite')
         # Добавление функций к кнопкам
         self.Button_add.clicked.connect(self.select_data)
+        self.Button_edit.clicked.connect(self.edit)
         self.button_reload.clicked.connect(self.load)
 
+    def edit(self):
+        self.mew.edit()
+        self.mew.show()  # показываем окно
+
     def select_data(self):
+        self.mew.select_data()
         self.mew.show()  # показываем окно
 
     def load(self):
