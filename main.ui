@@ -334,6 +334,19 @@ font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
      <string>Обновить</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="Button_load">
+    <property name="geometry">
+     <rect>
+      <x>664</x>
+      <y>430</y>
+      <width>91</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Загрузить чек</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
