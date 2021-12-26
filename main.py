@@ -2,15 +2,46 @@ import sqlite3
 import sys
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QMessageBox
 from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem
+
+data = []
+
+
+class ProductDel(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('products_del.ui', self)
+        self.pushButton.clicked.connect(self.deleting)
+        self.data = data
+
+    def get_info(self, info):
+        self.data = info
+        self.table.setColumnCount(6)  # количество столбцов
+        self.table.setRowCount(0)  # строки
+        for i, row in enumerate(self.data):
+            self.table.setRowCount(self.table.rowCount() + 1)  # количество строк
+            for j, elem in enumerate(row):
+                self.table.setItem(i, j, QTableWidgetItem(str(elem)))  # вводим данные
+        # имена столбцов
+        self.table.setHorizontalHeaderLabels(['id', 'Товар', 'Цена(1шт.)', 'Количество', 'Скидка', 'Всего'])
+
+    def deleting(self):
+        answer = QMessageBox()
+        answer.setWindowTitle('Подтверждение действий')
+        answer.setText('Вы подтверждаете свои дейтсвия?')
+        answer.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        flag = answer.exec()
+        if flag == QMessageBox.Ok:
+            self.data.__delitem__(int(self.lineEdit.text()) - 1)
+        self.close()
 
 
 class Product(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi('products.ui', self)  # Вызов .ui окна
-        self.data = []  # Список с покупками(имя товара, id и тд.)
+        self.data = data  # Список с покупками(имя товара, id и тд.)
         # Вызов базы данных
         self.connection = sqlite3.connect('main.sqlite')
         self.res = self.connection.cursor().execute('SELECT * FROM Товары').fetchall()
@@ -91,6 +122,7 @@ class Main(QMainWindow):
     def __init__(self):
         super().__init__()
         self.mew = Product()  # вызов класса с produсts.ui файл
+        self.mew_2 = ProductDel()
         # Вызов .ui главного окна и базы данных
         uic.loadUi('main.ui', self)
         self.connection = sqlite3.connect('main.sqlite')
@@ -98,6 +130,11 @@ class Main(QMainWindow):
         self.Button_add.clicked.connect(self.select_data)
         self.Button_edit.clicked.connect(self.edit)
         self.button_reload.clicked.connect(self.load)
+        self.Button_delete.clicked.connect(self.delete)
+
+    def delete(self):
+        self.mew_2.get_info(self.mew.return_data())
+        self.mew_2.show()
 
     def edit(self):
         self.mew.edit()
