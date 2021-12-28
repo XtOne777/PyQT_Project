@@ -132,7 +132,7 @@ class Main(QMainWindow):
     def __init__(self):
         super().__init__()
         self.mew = Product()  # вызов класса с produсts.ui файл
-        self.mew_2 = ProductDel()
+        self.mew_2 = ProductDel()  # вызов класса с product_del.ui файл
         # Вызов .ui главного окна и базы данных
         uic.loadUi('main.ui', self)
         self.connection = sqlite3.connect('main.sqlite')
@@ -162,6 +162,7 @@ class Main(QMainWindow):
             with open(QFileDialog.getOpenFileName(self, 'Выбрать файл', '', 'Файлы данных (*.csv)')[0],
                       encoding='utf-8') as csvfile:
                 global buyer, seller, data
+                data = []
                 text = csv.reader(csvfile, delimiter=';', quotechar='"')
                 for i, k in enumerate(text):
                     if i == 0:
@@ -182,7 +183,7 @@ class Main(QMainWindow):
     def save_data(self):
         try:
             with open(QFileDialog.getSaveFileName(self, "Save audio file",
-                                                  datetime.datetime.now().strftime('%d/%m/%Y %H.%M'),
+                                                  datetime.datetime.now().strftime('%d.%m.%Y %H.%M'),
                                                   "Файлы с данными (*.csv)")[0], 'w+', encoding='utf8') as csvfile:
                 text = csv.writer(csvfile, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 text.writerows([[self.line_number.text(), self.line_card.text()],
