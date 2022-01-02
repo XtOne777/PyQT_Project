@@ -6,18 +6,99 @@ import datetime
 from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QMessageBox, QFileDialog
 from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem
-
+# Глобальные переменные с данными о покупателе и продавце и покупками
 buyer = tuple()
 seller = tuple()
 data = []
 
 
+class ProductBD(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('products_bd.ui', self)  # Загрузка .ui файла
+        self.setWindowTitle('Редактирование базы данных с продуктами')  # Задаем название
+        self.connection = sqlite3.connect('main.sqlite')  # Загрузка базы данных
+        self.res = self.connection.cursor().execute('SELECT * FROM Товары').fetchall()  # Взятие данных из бд
+        self.reload_data()  # Перезагрузка таблицы
+        # Проверки на взаимодействия с кнопками/строками
+        self.spinBox.valueChanged.connect(self.edit_reload)
+        self.spinBox_2.valueChanged.connect(self.delete_reload)
+        self.Button_edit.clicked.connect(self.edit_data)
+        self.Button_delete.clicked.connect(self.delete_data)
+        self.Button_add.clicked.connect(self.adding_data)
+
+    def delete_reload(self):
+        value = self.spinBox_2.value()  # Значение строчки
+        # Задаём ограничения
+        if value > len(self.res):
+            self.spinBox_2.setValue(self.res[-1][0])
+        if value == 0:
+            self.spinBox_2.setValue(1)
+
+    def adding_data(self):
+        cur = self.connection.cursor()
+        cur.execute(f"INSERT INTO Товары (Товар, [Цена(1шт.)])"
+                    f" VALUES ('{self.lineEdit_2.text()}', {self.lineEdit_3.text()})")  # Добавляем новые данные
+        self.connection.commit()  # Сохраняем
+        self.reload_data()  # Перезагрузка таблицы
+
+    def delete_data(self):
+        # Потверждение действий
+        answer = QMessageBox()
+        answer.setWindowTitle('Подтверждение действий')
+        answer.setText('Вы подтверждаете свои дейтсвия?')
+        answer.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        flag = answer.exec()
+        if flag == QMessageBox.Ok:
+            # Удаление данных из бд
+            cur = self.connection.cursor()
+            cur.execute(f"DELETE FROM Товары WHERE id = {self.spinBox_2.value()}")
+            self.connection.commit()
+            self.reload_data()  # Перезагрузка таблицы
+
+    def edit_data(self):
+        cur = self.connection.cursor()
+        cur.execute(f"UPDATE Товары SET Товар = '{self.lineEdit_5.text()}',"
+                    f"[Цена(1шт.)] = {self.lineEdit_4.text()} WHERE id = {self.spinBox.value()}")  # Изменение данных
+        self.connection.commit()  # Сохраняем
+        self.reload_data()  # Перезагрузка таблицы
+
+    def reload_data(self):
+        self.res = self.connection.cursor().execute('SELECT * FROM Товары').fetchall()  # Берём данные из таблицы
+        # Размеры таблицы
+        self.table.setColumnCount(3)
+        self.table.setRowCount(0)
+        # Название столбцов
+        self.table.setHorizontalHeaderLabels(['id', 'Товар', 'Цена(1шт.)'])
+        # Функция вывода данных в таблицу
+        for i, row in enumerate(self.res):
+            self.table.setRowCount(self.table.rowCount() + 1)
+            for j, elem in enumerate(row):
+                self.table.setItem(i, j, QTableWidgetItem(str(elem)))
+
+    def edit_reload(self):
+        value = self.spinBox.value()  # Получаем значение строки
+        # Создаём ограничение значений
+        if value > len(self.res):
+            self.spinBox.setValue(self.res[-1][0])
+        if value == 0:
+            self.spinBox.setValue(1)
+        # Поиск данного айди
+        for i in self.res:
+            if i[0] == value:
+                # Изменение значений в строках
+                self.lineEdit_5.setText(str(i[1]))
+                self.lineEdit_4.setText(str(i[2]))
+                break
+
+
 class ProductDel(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('products_del.ui', self)
-        self.pushButton.clicked.connect(self.deleting)
-        self.data = data
+        uic.loadUi('products_del.ui', self)  # Загружаем .ui файл
+        self.setWindowTitle('Удаление продуктов')  # Задаём название
+        self.pushButton.clicked.connect(self.deleting)  # Задаём функции кнопкам
+        self.data = data  # Берём данные из глобальной переменной
 
     def get_info(self, info):
         self.data = info
@@ -31,20 +112,22 @@ class ProductDel(QMainWindow):
         self.table.setHorizontalHeaderLabels(['id', 'Товар', 'Цена(1шт.)', 'Количество', 'Скидка', 'Всего'])
 
     def deleting(self):
+        # Потверждения действиям
         answer = QMessageBox()
         answer.setWindowTitle('Подтверждение действий')
         answer.setText('Вы подтверждаете свои дейтсвия?')
         answer.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         flag = answer.exec()
         if flag == QMessageBox.Ok:
-            self.data.__delitem__(int(self.lineEdit.text()) - 1)
-        self.close()
+            self.data.__delitem__(int(self.lineEdit.text()) - 1)  # Удаляем покупку
+        self.close()  # Закрываем окно
 
 
 class Product(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi('products.ui', self)  # Вызов .ui окна
+        self.setWindowTitle('Редактирование списка покупки')
         self.data = data  # Список с покупками(имя товара, id и тд.)
         # Вызов базы данных
         self.connection = sqlite3.connect('main.sqlite')
@@ -135,7 +218,9 @@ class Main(QMainWindow):
         self.mew_2 = ProductDel()  # вызов класса с product_del.ui файл
         # Вызов .ui главного окна и базы данных
         uic.loadUi('main.ui', self)
+        self.setWindowTitle('Работа со списком покупок')
         self.connection = sqlite3.connect('main.sqlite')
+        self.bd_editing = ProductBD()  # вызов класса с product_bd.ui файл
         # Добавление функций к кнопкам
         self.Button_add.clicked.connect(self.select_data)
         self.Button_edit.clicked.connect(self.edit)
@@ -143,6 +228,10 @@ class Main(QMainWindow):
         self.Button_delete.clicked.connect(self.delete)
         self.Button_save.clicked.connect(self.save_data)
         self.Button_load.clicked.connect(self.load_data)
+        self.Button_bd.clicked.connect(self.bd_edit)
+
+    def bd_edit(self):
+        self.bd_editing.show()  # Показываем окно
 
     def load(self):
         # Выставляем размеры окна
@@ -159,6 +248,7 @@ class Main(QMainWindow):
 
     def load_data(self):
         try:
+            # Открываем .csv файл и задам значения глобальным переменным
             with open(QFileDialog.getOpenFileName(self, 'Выбрать файл', '', 'Файлы данных (*.csv)')[0],
                       encoding='utf-8') as csvfile:
                 global buyer, seller, data
@@ -172,6 +262,7 @@ class Main(QMainWindow):
                     elif i > 2:
                         if k:
                             data.append(k)
+            # Ввод значений в строки
             self.line_number.setText(buyer[0])
             self.line_card.setText(buyer[1])
             self.line_name.setText(seller[0])
@@ -182,6 +273,7 @@ class Main(QMainWindow):
 
     def save_data(self):
         try:
+            # Сохраняем все данные в .csv файл
             with open(QFileDialog.getSaveFileName(self, "Save audio file",
                                                   datetime.datetime.now().strftime('%d.%m.%Y %H.%M'),
                                                   "Файлы с данными (*.csv)")[0], 'w+', encoding='utf8') as csvfile:
@@ -193,15 +285,15 @@ class Main(QMainWindow):
             print(e)
 
     def delete(self):
-        self.mew_2.get_info(self.mew.return_data())
-        self.mew_2.show()
+        self.mew_2.get_info(self.mew.return_data())  # Выдаём значения классу
+        self.mew_2.show()  # Показываем окно
 
     def edit(self):
-        self.mew.edit()
+        self.mew.edit()  # Вызываем функцию редакции данных
         self.mew.show()  # показываем окно
 
     def select_data(self):
-        self.mew.select_data()
+        self.mew.select_data()  # Вызываем функию добавления данных
         self.mew.show()  # показываем окно
 
 
