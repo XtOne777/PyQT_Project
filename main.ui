@@ -241,19 +241,26 @@ font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
    <widget class="QLabel" name="Summary">
     <property name="geometry">
      <rect>
-      <x>500</x>
+      <x>520</x>
       <y>330</y>
-      <width>251</width>
+      <width>231</width>
       <height>31</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>16</pointsize>
+      <family>MS Shell Dlg 2</family>
+      <pointsize>20</pointsize>
+      <weight>50</weight>
+      <italic>false</italic>
+      <bold>false</bold>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
     <property name="text">
-     <string/>
+     <string>0.0</string>
     </property>
    </widget>
    <widget class="QPushButton" name="Button_save">

@@ -234,6 +234,7 @@ class Main(QMainWindow):
         self.bd_editing.show()  # Показываем окно
 
     def load(self):
+        global data
         # Выставляем размеры окна
         self.table.setColumnCount(6)
         self.table.setRowCount(0)
@@ -245,6 +246,17 @@ class Main(QMainWindow):
             self.table.setRowCount(self.table.rowCount() + 1)
             for j, elem in enumerate(row):
                 self.table.setItem(i, j, QTableWidgetItem(str(elem)))
+        # Загрузка вычислений
+        if data:
+            b = list()  # Вспомогательная переменная
+            summary = float()  # Сумма
+            for i in data:
+                k = int(i[2]) * int(i[3]) * float(i[4][:-1]) / 100
+                summary += k
+                b.append(f'{i[2]} * {i[3]} * {i[4]}')
+            # Выводим вычисления покупки
+            self.label_7.setText(' + '.join(b) + ' = ' + str(summary))
+            self.Summary.setText(str(summary))
 
     def load_data(self):
         try:
