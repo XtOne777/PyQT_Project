@@ -142,31 +142,11 @@
      </rect>
     </property>
    </widget>
-   <widget class="QLineEdit" name="line_card">
-    <property name="geometry">
-     <rect>
-      <x>80</x>
-      <y>70</y>
-      <width>113</width>
-      <height>20</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QLineEdit" name="line_name">
     <property name="geometry">
      <rect>
       <x>80</x>
       <y>140</y>
-      <width>113</width>
-      <height>20</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="line_id">
-    <property name="geometry">
-     <rect>
-      <x>80</x>
-      <y>160</y>
       <width>113</width>
       <height>20</height>
      </rect>
@@ -352,6 +332,26 @@ font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
     </property>
     <property name="text">
      <string>Загрузить чек</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="line_card">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>70</y>
+      <width>42</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="line_id">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>160</y>
+      <width>42</width>
+      <height>22</height>
+     </rect>
     </property>
    </widget>
   </widget>

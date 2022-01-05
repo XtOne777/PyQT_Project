@@ -12,6 +12,135 @@ seller = tuple()
 data = []
 
 
+class Seller(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('seller.ui', self)
+        self.setWindowTitle('Редактирование базы данных с продовцами')
+        self.connection = sqlite3.connect('main.sqlite')
+        self.res = self.connection.cursor().execute('SELECT * FROM Продавцы').fetchall()
+        self.reload_data()  # Берём данные из таблицы
+        self.Button_edit.clicked.connect(self.edit_data)
+        self.Button_delete.clicked.connect(self.delete_data)
+        self.Button_add.clicked.connect(self.adding_data)
+        self.spinBox.valueChanged.connect(self.value_changes)
+
+    def value_changes(self):
+        if self.res:
+            if self.spinBox.value() == 0:
+                self.spinBox.setValue(1)
+            elif self.spinBox.value() > len(self.res):
+                self.spinBox.setValue(len(self.res))
+            else:
+                for i in self.res:
+                    if i[0] == self.spinBox.value():
+                        self.lineEdit_5.setText(i[1])
+                        break
+        else:
+            self.line_id.setValue(0)
+
+    def get_value(self):
+        return self.res
+
+    def edit_data(self):
+        cur = self.connection.cursor()
+        cur.execute(f"UPDATE Продавцы SET "
+                    f"[Ф.И] = {self.lineEdit_5.text()} WHERE id = {self.spinBox.value()}")  # Изменение данных
+        self.connection.commit()  # Сохраняем
+        self.reload_data()  # Перезагрузка таблицы
+
+    def delete_data(self):
+        # Потверждение действий
+        answer = QMessageBox()
+        answer.setWindowTitle('Подтверждение действий')
+        answer.setText('Вы подтверждаете свои дейтсвия?')
+        answer.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        flag = answer.exec()
+        if flag == QMessageBox.Ok:
+            # Удаление данных из бд
+            cur = self.connection.cursor()
+            cur.execute(f"DELETE FROM Продавцы WHERE id = {self.spinBox_2.value()}")
+            self.connection.commit()
+            self.reload_data()  # Перезагрузка таблицы
+
+    def adding_data(self):
+        cur = self.connection.cursor()
+        cur.execute(f"INSERT INTO Продавцы ([Ф.И])"
+                    f" VALUES ('{self.lineEdit_2.text()}')")  # Добавляем новые данные
+        self.connection.commit()  # Сохраняем
+        self.reload_data()  # Перезагрузка таблицы
+
+    def reload_data(self):
+        self.res = self.connection.cursor().execute('SELECT * FROM Продавцы').fetchall()  # Берём данные из таблицы
+        # Размеры таблицы
+        self.table.setColumnCount(2)
+        self.table.setRowCount(0)
+        # Название столбцов
+        self.table.setHorizontalHeaderLabels(['id', 'Ф.И'])
+        # Функция вывода данных в таблицу
+        for i, row in enumerate(self.res):
+            self.table.setRowCount(self.table.rowCount() + 1)
+            for j, elem in enumerate(row):
+                self.table.setItem(i, j, QTableWidgetItem(str(elem)))
+
+
+class Buyers(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('buyers.ui', self)
+        self.setWindowTitle('Редактирование базы данных с покупателями')
+        self.connection = sqlite3.connect('main.sqlite')
+        self.res = self.connection.cursor().execute('SELECT * FROM Покупатели').fetchall()
+        self.reload_data()  # Берём данные из таблицы
+        self.Button_edit.clicked.connect(self.edit_data)
+        self.Button_delete.clicked.connect(self.delete_data)
+        self.Button_add.clicked.connect(self.adding_data)
+
+    def get_value(self):
+        return self.res
+
+    def edit_data(self):
+        cur = self.connection.cursor()
+        cur.execute(f"UPDATE Покупатели SET "
+                    f"Номер = {self.lineEdit_5.text()} WHERE id = {self.spinBox.value()}")  # Изменение данных
+        self.connection.commit()  # Сохраняем
+        self.reload_data()  # Перезагрузка таблицы
+
+    def delete_data(self):
+        # Потверждение действий
+        answer = QMessageBox()
+        answer.setWindowTitle('Подтверждение действий')
+        answer.setText('Вы подтверждаете свои дейтсвия?')
+        answer.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        flag = answer.exec()
+        if flag == QMessageBox.Ok:
+            # Удаление данных из бд
+            cur = self.connection.cursor()
+            cur.execute(f"DELETE FROM Покупатели WHERE id = {self.spinBox_2.value()}")
+            self.connection.commit()
+            self.reload_data()  # Перезагрузка таблицы
+
+    def adding_data(self):
+        cur = self.connection.cursor()
+        cur.execute(f"INSERT INTO Покупатели (Номер)"
+                    f" VALUES ('{self.lineEdit_2.text()}')")  # Добавляем новые данные
+        self.connection.commit()  # Сохраняем
+        self.reload_data()  # Перезагрузка таблицы
+
+    def reload_data(self):
+        self.res = self.connection.cursor().execute('SELECT * FROM Покупатели').fetchall()  # Берём данные из таблицы
+        # Размеры таблицы
+        self.table.setColumnCount(2)
+        self.table.setRowCount(0)
+        # Название столбцов
+        self.table.setHorizontalHeaderLabels(['id', 'Номер'])
+        # Функция вывода данных в таблицу
+        for i, row in enumerate(self.res):
+            self.table.setRowCount(self.table.rowCount() + 1)
+            for j, elem in enumerate(row):
+                self.table.setItem(i, j, QTableWidgetItem(str(elem)))
+
+
 class ProductBD(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -130,10 +259,18 @@ class Product(QMainWindow):
         self.setWindowTitle('Редактирование списка покупки')
         self.data = data  # Список с покупками(имя товара, id и тд.)
         # Вызов базы данных
+        self.spinBox.setValue(1)
         self.connection = sqlite3.connect('main.sqlite')
         self.res = self.connection.cursor().execute('SELECT * FROM Товары').fetchall()
         self.pushButton.clicked.connect(self.clicked_t)  # кнопка добавить
         self.pushButton_2.clicked.connect(self.clicked_b)  # кнопка изменить
+        self.spinBox.valueChanged.connect(self.value_changes)
+
+    def value_changes(self):
+        if self.spinBox.value() == 0:
+            self.spinBox.setValue(1)
+        if self.spinBox.value() > len(self.res):
+            self.spinBox.setValue(len(self.res))
 
     def edit(self):
         try:
@@ -141,7 +278,7 @@ class Product(QMainWindow):
             self.pushButton_2.show()  # показываем кнопку изменить
             self.label.setText('Номер покупки:')
             if len(self.data) > 0:  # проверка на наличие данных
-                self.lineEdit.setText(str(len(self.data)))
+                self.spinBox.setValue(len(self.data))
                 self.lineEdit_2.setText(self.data[-1][4][:-1])
                 self.lineEdit_3.setText(str(self.data[-1][3]))
             self.table.setColumnCount(6)  # количество столбцов
@@ -175,13 +312,13 @@ class Product(QMainWindow):
         self.data_reload()
         for i in self.res:
             try:  # Проверка на правильный ввод данных
-                if str(i[0]) == self.lineEdit.text():  # Проверка на id
+                if int(i[0]) == self.spinBox.value():  # Проверка на id
                     # Вычесления и добавление в список данных
                     self.data.append((str(i[0]), str(i[1]), str(i[2]),
                                       str(int(self.lineEdit_3.text())), str(self.lineEdit_2.text() + '%'),
                                       str(int(int(self.lineEdit_2.text()) * 0.01 *
                                               int(self.lineEdit_3.text()) * i[2]))))
-                    self.excep.setText(i[1] + ' добавлен успешно!')  # Вывод о успешном завершение
+                    self.excep.setText(i[1] + ' добавлен(-а) успешно!')  # Вывод о успешном завершение
             except ValueError:
                 self.excep.setText('Неправильный формат ввода!')
 
@@ -189,17 +326,17 @@ class Product(QMainWindow):
         self.data_reload()
         try:
             # редакция данных
-            self.data[int(self.lineEdit.text()) - 1] = (self.data[int(self.lineEdit.text()) - 1][0],
-                                                        self.data[int(self.lineEdit.text()) - 1][1],
-                                                        self.data[int(self.lineEdit.text()) - 1][2],
+            self.data[int(self.spinBox.value()) - 1] = (self.data[int(self.spinBox.value()) - 1][0],
+                                                        self.data[int(self.spinBox.value()) - 1][1],
+                                                        self.data[int(self.spinBox.value()) - 1][2],
                                                         self.lineEdit_3.text(),
                                                         self.lineEdit_2.text() + '%',
                                                         str(int(int(self.lineEdit_2.text()) * 0.01
                                                                 * int(self.lineEdit_3.text())
-                                                                * int(self.data[int(self.lineEdit.text()) - 1][2]
+                                                                * int(self.data[int(self.spinBox.value()) - 1][2]
                                                                       ))))
             # надпись о успехе
-            self.excep.setText(self.data[int(self.lineEdit.text()) - 1][1] + ' добавлен успешно!')
+            self.excep.setText(self.data[int(self.spinBox.value()) - 1][1] + ' изменен(-а) успешно!')
         except ValueError:
             self.excep.setText('Неправильный формат ввода!')
 
@@ -221,6 +358,8 @@ class Main(QMainWindow):
         self.setWindowTitle('Работа со списком покупок')
         self.connection = sqlite3.connect('main.sqlite')
         self.bd_editing = ProductBD()  # вызов класса с product_bd.ui файл
+        self.buyers_edit = Buyers()
+        self.seller_edit = Seller()
         # Добавление функций к кнопкам
         self.Button_add.clicked.connect(self.select_data)
         self.Button_edit.clicked.connect(self.edit)
@@ -229,6 +368,44 @@ class Main(QMainWindow):
         self.Button_save.clicked.connect(self.save_data)
         self.Button_load.clicked.connect(self.load_data)
         self.Button_bd.clicked.connect(self.bd_edit)
+        self.Button_buy_info.clicked.connect(self.buy_edit)
+        self.Button_worker.clicked.connect(self.sell_edit)
+        self.line_card.valueChanged.connect(self.value_changes_buyer)
+        self.line_id.valueChanged.connect(self.value_changes_seller)
+
+    def sell_edit(self):
+        self.seller_edit.show()
+
+    def value_changes_buyer(self):
+        if self.buyers_edit.get_value():
+            if self.line_card.value() == 0:
+                self.line_card.setValue(1)
+            elif self.line_card.value() > len(self.seller_edit.get_value()):
+                self.line_card.setValue(len(self.seller_edit.get_value()))
+            else:
+                for i in self.buyers_edit.get_value():
+                    if i[0] == self.line_card.value():
+                        self.line_number.setText(str(i[1]))
+                        break
+        else:
+            self.line_id.setValue(0)
+
+    def value_changes_seller(self):
+        if self.seller_edit.get_value():
+            if self.line_id.value() == 0:
+                self.line_id.setValue(1)
+            elif self.line_id.value() > len(self.seller_edit.get_value()):
+                self.line_id.setValue(len(self.seller_edit.get_value()))
+            else:
+                for i in self.seller_edit.get_value():
+                    if i[0] == self.line_id.value():
+                        self.line_name.setText(str(i[1]))
+                        break
+        else:
+            self.line_id.setValue(0)
+
+    def buy_edit(self):
+        self.buyers_edit.show()
 
     def bd_edit(self):
         self.bd_editing.show()  # Показываем окно
@@ -276,9 +453,9 @@ class Main(QMainWindow):
                             data.append(k)
             # Ввод значений в строки
             self.line_number.setText(buyer[0])
-            self.line_card.setText(buyer[1])
+            self.line_card.setValue(int(buyer[1]))
             self.line_name.setText(seller[0])
-            self.line_id.setText(seller[1])
+            self.line_id.setValue(int(seller[1]))
             self.load()
         except Exception as e:
             print(e)
