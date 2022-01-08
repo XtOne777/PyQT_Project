@@ -354,6 +354,19 @@ font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
      </rect>
     </property>
    </widget>
+   <widget class="QPushButton" name="Button_help">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>430</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Помощь</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>

@@ -2,30 +2,87 @@ import sqlite3
 import sys
 import csv
 import datetime
+import os
 
 from PyQt5 import uic
+from PyQt5.QtGui import QPixmap, QPainter
 from PyQt5.QtWidgets import QApplication, QMessageBox, QFileDialog
-from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem
+from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem, QLabel
+
 # Глобальные переменные с данными о покупателе и продавце и покупками
 buyer = tuple()
 seller = tuple()
 data = []
 
 
+class Help(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('./ui Files/help.ui', self)  # Вызов .ui окна
+        self.setWindowTitle('Помощь')  # Название окна
+        self.pictures = {1: './data/add.png',
+                         2: './data/delete.png',
+                         3: './data/edit.png'}  # Массив с путями картинок
+        self.picture_now = 1  # Нынешняя картинка
+        self.label_5 = QLabel(self)  # Картинки
+        self.pushButton.clicked.connect(lambda x: os.startfile('.\\README\\Презинтация.pptx'))  # Открытие презинтации
+        self.pushButton_2.clicked.connect(self.left_button)  # Кнопка налево
+        self.pushButton_3.clicked.connect(self.right_button)  # Кнопка направо
+        self.change_picture()
+
+    def left_button(self):
+        if self.picture_now == 1:
+            self.picture_now = 3
+        else:
+            self.picture_now -= 1
+        self.change_picture()  # Обновляет картинку
+
+    def right_button(self):
+        if self.picture_now == 3:
+            self.picture_now = 1
+        else:
+            self.picture_now += 1
+        self.change_picture()  # Обновляет картинку
+
+    def paintEvent(self, event):
+        # Рисуем прямоугольник по краям картинок
+        qp = QPainter()
+        qp.begin(self)
+        if self.picture_now != 2:
+            qp.drawRect(40, 10, 800, 300)
+        else:
+            qp.drawRect(190, 10, 430, 390)
+        qp.end()
+
+    def change_picture(self):
+        # Выводим картинку на экран
+        self.pixmap = QPixmap(self.pictures[self.picture_now])
+        self.label_5.setPixmap(self.pixmap)
+        if self.picture_now != 2:
+            self.label_5.resize(800, 300)
+            self.label_5.move(50, 10)
+        else:
+            self.label_5.resize(500, 400)
+            self.label_5.move(200, 10)
+        self.update()
+
+
 class Seller(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('seller.ui', self)
-        self.setWindowTitle('Редактирование базы данных с продовцами')
-        self.connection = sqlite3.connect('main.sqlite')
+        uic.loadUi('./ui Files/seller.ui', self)  # Загружаем .ui файл
+        self.setWindowTitle('Редактирование базы данных с продовцами')  # Название окна
+        self.connection = sqlite3.connect('./data/main.sqlite')  # Открываем базу данных
         self.res = self.connection.cursor().execute('SELECT * FROM Продавцы').fetchall()
         self.reload_data()  # Берём данные из таблицы
+        # Выдаём функции картинкам
         self.Button_edit.clicked.connect(self.edit_data)
         self.Button_delete.clicked.connect(self.delete_data)
         self.Button_add.clicked.connect(self.adding_data)
         self.spinBox.valueChanged.connect(self.value_changes)
 
     def value_changes(self):
+        # Диапазон значений у строки с цифрами
         if self.res:
             if self.spinBox.value() == 0:
                 self.spinBox.setValue(1)
@@ -40,14 +97,17 @@ class Seller(QMainWindow):
             self.line_id.setValue(0)
 
     def get_value(self):
-        return self.res
+        return self.res  # Возращаем данные из бд
 
     def edit_data(self):
-        cur = self.connection.cursor()
-        cur.execute(f"UPDATE Продавцы SET "
-                    f"[Ф.И] = {self.lineEdit_5.text()} WHERE id = {self.spinBox.value()}")  # Изменение данных
-        self.connection.commit()  # Сохраняем
-        self.reload_data()  # Перезагрузка таблицы
+        try:
+            cur = self.connection.cursor()
+            cur.execute(f"UPDATE Продавцы SET "
+                        f"[Ф.И] = '{self.lineEdit_5.text()}' WHERE id = {self.spinBox.value()}")  # Изменение данных
+            self.connection.commit()  # Сохраняем
+            self.reload_data()  # Перезагрузка таблицы
+        except Exception as e:
+            print(e)
 
     def delete_data(self):
         # Потверждение действий
@@ -87,17 +147,18 @@ class Seller(QMainWindow):
 class Buyers(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('buyers.ui', self)
-        self.setWindowTitle('Редактирование базы данных с покупателями')
-        self.connection = sqlite3.connect('main.sqlite')
+        uic.loadUi('./ui Files/buyers.ui', self)  # Загружаем .ui файл
+        self.setWindowTitle('Редактирование базы данных с покупателями')  # Название окна
+        self.connection = sqlite3.connect('./data/main.sqlite')  # Открываем бд
         self.res = self.connection.cursor().execute('SELECT * FROM Покупатели').fetchall()
         self.reload_data()  # Берём данные из таблицы
+        # Выдаём функции кнопкам
         self.Button_edit.clicked.connect(self.edit_data)
         self.Button_delete.clicked.connect(self.delete_data)
         self.Button_add.clicked.connect(self.adding_data)
 
     def get_value(self):
-        return self.res
+        return self.res  # Возращаем данные из бд
 
     def edit_data(self):
         cur = self.connection.cursor()
@@ -144,9 +205,9 @@ class Buyers(QMainWindow):
 class ProductBD(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('products_bd.ui', self)  # Загрузка .ui файла
+        uic.loadUi('./ui Files/products_bd.ui', self)  # Загрузка .ui файла
         self.setWindowTitle('Редактирование базы данных с продуктами')  # Задаем название
-        self.connection = sqlite3.connect('main.sqlite')  # Загрузка базы данных
+        self.connection = sqlite3.connect('./data/main.sqlite')  # Загрузка базы данных
         self.res = self.connection.cursor().execute('SELECT * FROM Товары').fetchall()  # Взятие данных из бд
         self.reload_data()  # Перезагрузка таблицы
         # Проверки на взаимодействия с кнопками/строками
@@ -161,8 +222,6 @@ class ProductBD(QMainWindow):
         # Задаём ограничения
         if value > len(self.res):
             self.spinBox_2.setValue(self.res[-1][0])
-        if value == 0:
-            self.spinBox_2.setValue(1)
 
     def adding_data(self):
         cur = self.connection.cursor()
@@ -224,7 +283,7 @@ class ProductBD(QMainWindow):
 class ProductDel(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('products_del.ui', self)  # Загружаем .ui файл
+        uic.loadUi('./ui Files/products_del.ui', self)  # Загружаем .ui файл
         self.setWindowTitle('Удаление продуктов')  # Задаём название
         self.pushButton.clicked.connect(self.deleting)  # Задаём функции кнопкам
         self.data = data  # Берём данные из глобальной переменной
@@ -255,12 +314,12 @@ class ProductDel(QMainWindow):
 class Product(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('products.ui', self)  # Вызов .ui окна
+        uic.loadUi('./ui Files/products.ui', self)  # Вызов .ui окна
         self.setWindowTitle('Редактирование списка покупки')
         self.data = data  # Список с покупками(имя товара, id и тд.)
         # Вызов базы данных
         self.spinBox.setValue(1)
-        self.connection = sqlite3.connect('main.sqlite')
+        self.connection = sqlite3.connect('./data/main.sqlite')
         self.res = self.connection.cursor().execute('SELECT * FROM Товары').fetchall()
         self.pushButton.clicked.connect(self.clicked_t)  # кнопка добавить
         self.pushButton_2.clicked.connect(self.clicked_b)  # кнопка изменить
@@ -354,12 +413,13 @@ class Main(QMainWindow):
         self.mew = Product()  # вызов класса с produсts.ui файл
         self.mew_2 = ProductDel()  # вызов класса с product_del.ui файл
         # Вызов .ui главного окна и базы данных
-        uic.loadUi('main.ui', self)
+        uic.loadUi('./ui Files/main.ui', self)
         self.setWindowTitle('Работа со списком покупок')
-        self.connection = sqlite3.connect('main.sqlite')
+        self.connection = sqlite3.connect('./data/main.sqlite')
         self.bd_editing = ProductBD()  # вызов класса с product_bd.ui файл
         self.buyers_edit = Buyers()
         self.seller_edit = Seller()
+        self.help = Help()
         # Добавление функций к кнопкам
         self.Button_add.clicked.connect(self.select_data)
         self.Button_edit.clicked.connect(self.edit)
@@ -372,11 +432,16 @@ class Main(QMainWindow):
         self.Button_worker.clicked.connect(self.sell_edit)
         self.line_card.valueChanged.connect(self.value_changes_buyer)
         self.line_id.valueChanged.connect(self.value_changes_seller)
+        self.Button_help.clicked.connect(self.help_window)
+
+    def help_window(self):
+        self.help.show()  # Показываем окно
 
     def sell_edit(self):
-        self.seller_edit.show()
+        self.seller_edit.show()  # Показываем окно
 
     def value_changes_buyer(self):
+        # Авто ввод данных и диапозон значений
         if self.buyers_edit.get_value():
             if self.line_card.value() == 0:
                 self.line_card.setValue(1)
@@ -391,6 +456,7 @@ class Main(QMainWindow):
             self.line_id.setValue(0)
 
     def value_changes_seller(self):
+        # Авто ввод данных и диапазон значений
         if self.seller_edit.get_value():
             if self.line_id.value() == 0:
                 self.line_id.setValue(1)
@@ -405,7 +471,7 @@ class Main(QMainWindow):
             self.line_id.setValue(0)
 
     def buy_edit(self):
-        self.buyers_edit.show()
+        self.buyers_edit.show()  # Показываем окно
 
     def bd_edit(self):
         self.bd_editing.show()  # Показываем окно
@@ -434,6 +500,9 @@ class Main(QMainWindow):
             # Выводим вычисления покупки
             self.label_7.setText(' + '.join(b) + ' = ' + str(summary))
             self.Summary.setText(str(summary))
+        else:
+            self.label_7.setText('')
+            self.Summary.setText('0.0')
 
     def load_data(self):
         try:
@@ -458,7 +527,8 @@ class Main(QMainWindow):
             self.line_id.setValue(int(seller[1]))
             self.load()
         except Exception as e:
-            print(e)
+            if '[Errno 2] No such file or directory: ' in str(e):
+                pass
 
     def save_data(self):
         try:
@@ -471,7 +541,8 @@ class Main(QMainWindow):
                                 [self.line_name.text(), self.line_id.text()],
                                 *data])
         except Exception as e:
-            print(e)
+            if '[Errno 2] No such file or directory: ' in str(e):
+                pass
 
     def delete(self):
         self.mew_2.get_info(self.mew.return_data())  # Выдаём значения классу
