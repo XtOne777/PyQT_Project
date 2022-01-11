@@ -9,6 +9,7 @@ from PyQt5.QtGui import QPixmap, QPainter
 from PyQt5.QtWidgets import QApplication, QMessageBox, QFileDialog
 from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem, QLabel
 
+
 # Глобальные переменные с данными о покупателе и продавце и покупками
 buyer = tuple()
 seller = tuple()
@@ -84,10 +85,10 @@ class Seller(QMainWindow):
     def value_changes(self):
         # Диапазон значений у строки с цифрами
         if self.res:
-            if self.spinBox.value() == 0:
-                self.spinBox.setValue(1)
-            elif self.spinBox.value() > len(self.res):
-                self.spinBox.setValue(len(self.res))
+            if self.spinBox.value() < self.res[0][0]:
+                self.spinBox.setValue(self.res[0][0])
+            elif self.spinBox.value() > self.res[-1][0]:
+                self.spinBox.setValue(self.res[-1][0])
             else:
                 for i in self.res:
                     if i[0] == self.spinBox.value():
@@ -177,8 +178,14 @@ class Buyers(QMainWindow):
         if flag == QMessageBox.Ok:
             # Удаление данных из бд
             cur = self.connection.cursor()
-            cur.execute(f"DELETE FROM Покупатели WHERE id = {self.spinBox_2.value()}")
-            self.connection.commit()
+            flag = False
+            for i in self.res:
+                if i[0] == self.spinBox_2.value():
+                    flag = True
+                    break
+            if flag:
+                cur.execute(f"DELETE FROM Покупатели WHERE id = {self.spinBox_2.value()}")
+                self.connection.commit()
             self.reload_data()  # Перезагрузка таблицы
 
     def adding_data(self):
@@ -220,8 +227,10 @@ class ProductBD(QMainWindow):
     def delete_reload(self):
         value = self.spinBox_2.value()  # Значение строчки
         # Задаём ограничения
-        if value > len(self.res):
+        if value > self.res[-1][0]:
             self.spinBox_2.setValue(self.res[-1][0])
+        elif value < self.res[0][0]:
+            self.spinBox_2.setValue(self.res[0][0])
 
     def adding_data(self):
         cur = self.connection.cursor()
@@ -240,8 +249,15 @@ class ProductBD(QMainWindow):
         if flag == QMessageBox.Ok:
             # Удаление данных из бд
             cur = self.connection.cursor()
-            cur.execute(f"DELETE FROM Товары WHERE id = {self.spinBox_2.value()}")
-            self.connection.commit()
+            for i in self.res:
+                if i[0] == self.spinBox_2.value():
+                    flag = True
+                    break
+                else:
+                    flag = False
+            if flag:
+                cur.execute(f"DELETE FROM Товары WHERE id = {self.spinBox_2.value()}")
+                self.connection.commit()
             self.reload_data()  # Перезагрузка таблицы
 
     def edit_data(self):
@@ -267,10 +283,10 @@ class ProductBD(QMainWindow):
     def edit_reload(self):
         value = self.spinBox.value()  # Получаем значение строки
         # Создаём ограничение значений
-        if value > len(self.res):
+        if value > self.res[-1][0]:
             self.spinBox.setValue(self.res[-1][0])
-        if value == 0:
-            self.spinBox.setValue(1)
+        if value < self.res[0][0]:
+            self.spinBox.setValue(self.res[0][0])
         # Поиск данного айди
         for i in self.res:
             if i[0] == value:
@@ -278,6 +294,8 @@ class ProductBD(QMainWindow):
                 self.lineEdit_5.setText(str(i[1]))
                 self.lineEdit_4.setText(str(i[2]))
                 break
+        self.lineEdit_5.setText('')
+        self.lineEdit_4.setText('')
 
 
 class ProductDel(QMainWindow):
@@ -307,7 +325,8 @@ class ProductDel(QMainWindow):
         answer.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         flag = answer.exec()
         if flag == QMessageBox.Ok:
-            self.data.__delitem__(int(self.lineEdit.text()) - 1)  # Удаляем покупку
+            if 1 >= int(self.lineEdit.text()) > len(self.data):
+                self.data.__delitem__(int(self.lineEdit.text()) - 1)  # Удаляем покупку
         self.close()  # Закрываем окно
 
 
@@ -326,10 +345,10 @@ class Product(QMainWindow):
         self.spinBox.valueChanged.connect(self.value_changes)
 
     def value_changes(self):
-        if self.spinBox.value() == 0:
+        if self.spinBox.value() < self.res[0][0]:
             self.spinBox.setValue(1)
-        if self.spinBox.value() > len(self.res):
-            self.spinBox.setValue(len(self.res))
+        if self.spinBox.value() > self.res[-1][0]:
+            self.spinBox.setValue(self.res[-1][0])
 
     def edit(self):
         try:
