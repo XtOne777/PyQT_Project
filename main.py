@@ -443,11 +443,12 @@ class Main(QMainWindow):
     def value_changes_buyer(self):
         # Авто ввод данных и диапозон значений
         if self.buyers_edit.get_value():
-            if self.line_card.value() == 0:
-                self.line_card.setValue(1)
-            elif self.line_card.value() > len(self.seller_edit.get_value()):
-                self.line_card.setValue(len(self.seller_edit.get_value()))
+            if self.line_card.value() < self.buyers_edit.get_value()[0][0]:
+                self.line_card.setValue(self.buyers_edit.get_value()[0][0])
+            elif self.line_card.value() > self.buyers_edit.get_value()[-1][0]:
+                self.line_card.setValue(self.buyers_edit.get_value()[-1][0])
             else:
+                self.line_number.setText('')
                 for i in self.buyers_edit.get_value():
                     if i[0] == self.line_card.value():
                         self.line_number.setText(str(i[1]))
@@ -458,11 +459,12 @@ class Main(QMainWindow):
     def value_changes_seller(self):
         # Авто ввод данных и диапазон значений
         if self.seller_edit.get_value():
-            if self.line_id.value() == 0:
-                self.line_id.setValue(1)
-            elif self.line_id.value() > len(self.seller_edit.get_value()):
-                self.line_id.setValue(len(self.seller_edit.get_value()))
+            if self.line_id.value() < self.seller_edit.get_value()[0][0]:
+                self.line_id.setValue(self.seller_edit.get_value()[0][0])
+            elif self.line_id.value() > self.seller_edit.get_value()[-1][0]:
+                self.line_id.setValue(self.seller_edit.get_value()[-1][0])
             else:
+                self.line_name.setText('')
                 for i in self.seller_edit.get_value():
                     if i[0] == self.line_id.value():
                         self.line_name.setText(str(i[1]))
